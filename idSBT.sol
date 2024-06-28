@@ -3,10 +3,6 @@ pragma solidity ^0.8.7;
 
 import "./verifier.sol";
 
-interface IVerifier {
-    function verifyTx(Verifier.Proof memory proof, uint256[1] memory input) external view returns (bool);
-}
-
 contract SoulBoundToken {
     
 

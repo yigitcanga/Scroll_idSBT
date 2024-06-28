@@ -1,0 +1,6 @@
+def main(public field callerAddress, public field ownerAddress) -> bool 
+{
+    bool valid = if callerAddress == ownerAddress {true} else {false};
+
+    return valid;
+}

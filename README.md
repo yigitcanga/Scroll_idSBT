@@ -10,6 +10,11 @@ Digital identification system on Scroll testnet is built and methods for impleme
 
 •	A function is added to the smart contract that grants minting access to an address written inside the function. Only the deployer of the contract has the ability to grant minting access to prevent anyone having access to the digital identity system that might result in people which are not meant to have an ID end up having one by getting an illegal access. Also, a function that revokes access from an address that access is given before is also implemented to prevent abuse of access power by malicious users.
 
+Contract
+
+Published the contract on Scroll Sepolia, contract is: 0xb6508da8270BeF8245658abAad13f9de541c6dAe
+Scanner website: https://sepolia.scrollscan.com/address/0xb6508da8270bef8245658abaad13f9de541c6dae#code
+
 Website
 
 Built a website for this project: https://cyber-id-nine.vercel.app/

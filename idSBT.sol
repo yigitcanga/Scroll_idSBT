@@ -74,13 +74,6 @@ contract SoulBoundToken {
     // Mapping to store additional token information
     mapping(uint256 => IDInfo) private tokenInfo;
 
-    //function getTokenInfo(address owner) public view onlyAccessThroughSignature("getTokenInfo") returns (IDInfo memory) {
-        
-    //    uint256 tokenId = getTokenIdFromAddress(owner);
-
-    //    return tokenInfo[tokenId];
-    //}
-
     function getTokenInfo(address owner) public view returns (IDInfo memory) {
         
         uint256 tokenId = getTokenIdFromAddress(owner);    
@@ -156,36 +149,36 @@ contract SoulBoundToken {
         return from;
     }
 
-    function testProof() public view returns (bool) {
-        uint256[2] memory a = [
-            0x2f1a76ed3dd6bcaf2584a5dc76a33e2d04e8ec45fa69ab83324255faf5773292,
-            0x29babe26ccd3206ba451972d995c70e7c0e37984e6bc25761cdcb53c9b8e3953
-        ];
-        uint256[2][2] memory b = [
-            [
-                0x020cecc344a6a08fbfa22af8495072a84eb3363db12260f5632246d8471f8e8e,
-                0x28af39cd4a5f9883dc2c52c27e777818bc2886472d929a8866306a8a1d848d16
-            ],
-            [
-                0x067e58fcc71b63e6250ec18dca01286ec87bc6306b7e16822ec35145611c9ef5,
-                0x2bb106854e200ea5efee102f969fbfb8c382350b9fa6e5840553118fa268d419
-            ]
-        ];
-        uint256[2] memory c = [
-            0x1f9d025be628fa40b8f03f03ed2f5c38043945a3ba63ccc282756dfeb346bf28,
-            0x2401a59f09e291b81f292090e54988a2f342950c0eafc2f37e0668ddf5a160b0
-        ];
-        uint256[3] memory input = [uint256(150), uint256(150), uint256(1)];
+    function testProof(bytes memory proofData, uint256[] memory inputs) public view returns (bool) {
+        
+        Verifier.Proof memory proof = deserializeProof(proofData);
 
-        Verifier.Proof memory proof;
-        proof.a = Pairing.G1Point(a[0], a[1]);
-        proof.b = Pairing.G2Point([b[0][0], b[0][1]], [b[1][0], b[1][1]]);
-        proof.c = Pairing.G1Point(c[0], c[1]);
+        // Prepare input array for verification
+        uint256[3] memory inputArr = [inputs[0], inputs[1], inputs[2]];
 
-        // Call the verifier contract
-        return verifier.verifyTx(proof, input);
+        // Call the verifier contract's verifyTx function
+        return verifier.verifyTx(proof, inputArr);
     }
 
+        function deserializeProof(bytes memory proofData) internal pure returns (Verifier.Proof memory proof) {
+        (
+            uint256 aX,
+            uint256 aY,
+            uint256[2] memory bX,
+            uint256[2] memory bY,
+            uint256 cX,
+            uint256 cY
+        ) = abi.decode(proofData, (uint256, uint256, uint256[2], uint256[2], uint256, uint256));
 
+        proof = Verifier.Proof({
+            a: Pairing.G1Point(aX, aY),
+            b: Pairing.G2Point(bX, bY),
+            c: Pairing.G1Point(cX, cY)
+        });
+    }
+
+    function getAddresses(address _owner) public view returns (address, address) {
+        return (_owner, msg.sender);
+    }
 
 }

@@ -12,8 +12,8 @@ Digital identification system on Scroll testnet is built and methods for impleme
 
 Contract
 
-Published the contract on Scroll Sepolia, contract is: 0xb6508da8270BeF8245658abAad13f9de541c6dAe
-Scanner website: https://sepolia.scrollscan.com/address/0xb6508da8270bef8245658abaad13f9de541c6dae#code
+Published the contract on Scroll Sepolia, contract is: 0x0ea3e8ebcc4be5dac7600c9aa3764ad510a385aa
+Scanner website: https://sepolia.scrollscan.com/address/0x0ea3e8ebcc4be5dac7600c9aa3764ad510a385aa
 
 Website
 

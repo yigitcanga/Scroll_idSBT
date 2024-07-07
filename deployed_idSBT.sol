@@ -1,192 +1,10 @@
 /**
- *Submitted for verification at sepolia.scrollscan.com on 2024-07-04
+ *Submitted for verification at sepolia.scrollscan.com on 2024-06-28
 */
 
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-contract SoulBoundToken {
-    
-
-    uint256 private _tokenIdCounter;
-
-    struct IDInfo {
-        string name;
-        uint256 id;
-    }
-
-    uint256 private currentTokenId;
-    
-    mapping(uint256 tokenId => address) private _owners;
-    mapping(address owner => uint256) private _balances;
-    mapping(uint256 id => address) private _idOwners;
-    mapping(address => bool) public minters;
-
-    //modifier onlyAccessThroughSignature(bytes32 _sig) {
-    //    require(keccak256(abi.encodePacked(_sig)) == keccak256("Sign to get token info"), "Invalid signature");
-    //    _;
-    //}
-
-    modifier onlyMinter() {
-        require(minters[msg.sender], "Caller is not a minter");
-        _;
-    }
-
-    Verifier verifier;
-
-    constructor(address _verifierAddress) {
-        verifier = Verifier(_verifierAddress);
-    }
-
-        // Function to grant minting permission to an address
-    function grantMinter(address _minter) public  {
-        minters[_minter] = true;
-    }
-
-    // Function to revoke minting permission from an address
-    function revokeMinter(address _minter) public  {
-        minters[_minter] = false;
-    }
-
-    // Mint function callable only by addresses with minting permission
-    function mint(address _to, string memory _name, uint256 _id) public onlyMinter {
-
-        require(_idOwnerOf(_id) == address(0), "Token ID already exists");
-        
-        uint256 newTokenId = currentTokenId;
-        currentTokenId++;
-
-        if (_to == address(0)) {
-            revert("Wrong minter adress");
-        }
-        address previousOwner = _update(_to, newTokenId, _id);
-        if (previousOwner != address(0)) {
-            revert("Wrong previous owner");
-        }
-
-        _setIDInfo(newTokenId, _name, _id);
-    }
-
-    // Internal function to set token information
-    function _setIDInfo(uint256 _tokenId, string memory _name, uint256 _id) internal {
-        IDInfo memory info = IDInfo(_name, _id);
-        tokenInfo[_tokenId] = info;
-    }
-
-    // Mapping to store additional token information
-    mapping(uint256 => IDInfo) private tokenInfo;
-
-    function getTokenInfo(address owner) public view returns (IDInfo memory) {
-        
-        uint256 tokenId = getTokenIdFromAddress(owner);    
-        //require(testProof(), "Token verification failed");
-
-        return tokenInfo[tokenId];
-    }
-
-    function getTokenIdFromAddress(address owner) public view returns (uint256) {
-        for (uint256 i = 0; i < currentTokenId; i++) {
-            if (_ownerOf(i) == owner) {
-                return i;
-            }
-        
-        }
-        return 0;
-    }
-
-    function transferFrom(address from, address to, uint256 tokenId) public { revert("Your ID cannot be transfered"); }
-
-
-    function burn(uint256 tokenId) external {
-        require(ownerOf(tokenId) == msg.sender, "Only the owner of the ID can burn it.");
-
-        address previousOwner = _update(address(0), tokenId, tokenInfo[tokenId].id);
-        if (previousOwner == address(0)) {
-            revert ("ERC721NonexistentToken");
-        }
-        delete tokenInfo[tokenId];
-
-    }
-
-    function _idOwnerOf(uint256 id) public view returns (address) {
-        return _idOwners[id];
-    }
-
-    function _ownerOf(uint256 tokenId) internal view virtual returns (address) {
-        return _owners[tokenId];
-    }
-
-    function ownerOf(uint256 tokenId) public view virtual returns (address) {
-        return _requireOwned(tokenId);
-    }
-
-    function _requireOwned(uint256 tokenId) internal view returns (address) {
-        address owner = _ownerOf(tokenId);
-        if (owner == address(0)) {
-            revert ("NonexistentToken");
-        }
-        return owner;
-    }
-
-    function _update(address to, uint256 tokenId, uint256 id/*, address auth*/) internal returns (address) {
-        address from = _ownerOf(tokenId);
-
-        // Execute the update
-        if (from != address(0)) {
-
-            unchecked {
-                _balances[from] -= 1;
-            }
-        }
-
-        if (to != address(0)) {
-            unchecked {
-                _balances[to] += 1;
-            }
-        }
-
-        _owners[tokenId] = to;
-        _idOwners[id]    = to;   
-
-        return from;
-    }
-
-    function testProof(bytes memory proofData, uint256[] memory inputs) public view returns (bool) {
-        
-        Verifier.Proof memory proof = deserializeProof(proofData);
-
-        // Prepare input array for verification
-        uint256[3] memory inputArr = [inputs[0], inputs[1], inputs[2]];
-
-        // Call the verifier contract's verifyTx function
-        return verifier.verifyTx(proof, inputArr);
-    }
-
-        function deserializeProof(bytes memory proofData) internal pure returns (Verifier.Proof memory proof) {
-        (
-            uint256 aX,
-            uint256 aY,
-            uint256[2] memory bX,
-            uint256[2] memory bY,
-            uint256 cX,
-            uint256 cY
-        ) = abi.decode(proofData, (uint256, uint256, uint256[2], uint256[2], uint256, uint256));
-
-        proof = Verifier.Proof({
-            a: Pairing.G1Point(aX, aY),
-            b: Pairing.G2Point(bX, bY),
-            c: Pairing.G1Point(cX, cY)
-        });
-    }
-
-    function getAddresses(address _owner) public view returns (address, address) {
-        return (_owner, msg.sender);
-    }
-
-}
-
-
-pragma solidity ^0.8.0;
 library Pairing {
     struct G1Point {
         uint X;
@@ -340,15 +158,15 @@ contract Verifier {
         Pairing.G1Point c;
     }
     function verifyingKey() pure internal returns (VerifyingKey memory vk) {
-        vk.alpha = Pairing.G1Point(uint256(0x0bdb26a0360323d29771c49a4a0342c7b193c8684d4a266b59d67a2069b94de9), uint256(0x179fd4d2bb01524e5dfb32409b653bc67611566448c127a96c19a419d1115b99));
-        vk.beta = Pairing.G2Point([uint256(0x157a84dfa393fc0cbf1fd0efa80ca6c226f2ca22cff480e77a4b990c97f15881), uint256(0x17a34db5dd02ae8a05ffab1697e9f5a6cb97a3b444379a79c50ff9d4a2de01ae)], [uint256(0x2365474d93ba0effc91888c2958e0256f8abf0ef971d575bbc4196245b9e5f3f), uint256(0x201ea15beb455bc6fa02fcb9d7d0c26faac474aa0ba426103c8413408f676b47)]);
-        vk.gamma = Pairing.G2Point([uint256(0x2699b389895a7a709afdebfd31e3fa52fbd183739f743c2d3ec3e1609c44295f), uint256(0x0d8e817bc1fa2cc19ea1c7f11c08e4b7e093296f440e2c6b67d4d62dc358401d)], [uint256(0x23b02da44579ad133f8cffafa82af267da79e567f08f7f8901bba48d4ace3c40), uint256(0x1fc6cfb8f8d63b7fe44e22b3db8f3150d9d8b0a787e568619ac6f2796dd82649)]);
-        vk.delta = Pairing.G2Point([uint256(0x2dff64c68b0743ab848e023bc5c5c82156cb665ca13bb2532960ba6202327c6f), uint256(0x25bf67a832351324503f2784212a4d756b463ab38604fbd02e21a073a575f5fd)], [uint256(0x21be0f86618a7c22a721e1956a8faf613d303a0817a41994ee34134e357478cc), uint256(0x06fab8db0a2efc771d53826494c9c4e173d3b90f9d9d1097621fcd59a0ab0cb2)]);
+        vk.alpha = Pairing.G1Point(uint256(0x2c3a4ed5ca281d2b7e5ae6a7d6e24a8f00240a5a1f1c183d6535b21ea2f83ddd), uint256(0x1ded1b25571da3a3fa54a10ebcca3d6bd61a890c2b71969f24c9de99c50fd8e5));
+        vk.beta = Pairing.G2Point([uint256(0x145f0804efb4e7252966aec4f79988d13fc3173abbd27b87853cd60b4bc8c30e), uint256(0x14cacf1bb96ac5c87f08dec1c8ee0dc2ae36011a9079d9926d58bd8a767b97a7)], [uint256(0x016aac3d71ed5c9f62d5eb646fb73441e2d15d0d36edd9eb4bdec305737de1a1), uint256(0x1a0e36378be5b20625a67b933f9bdd86db76638ad1848f8dc1d14c13f3690bb4)]);
+        vk.gamma = Pairing.G2Point([uint256(0x14381a9a9cfe5fa5bcf839e77e04225ef7f68d0ab52a50b92e1a86319826735f), uint256(0x20eac850e2bb2664a0dfea3601e0fcaee530a0eea522a6e977d2566047b8dfd1)], [uint256(0x1868c983408f161472efbd2237affa1862a68bd57135cb8536799d8f229e0c3c), uint256(0x0990c4e3fd620868841bba05ccaf55e17e1bffebbe45834f105b8a1e2b70255d)]);
+        vk.delta = Pairing.G2Point([uint256(0x17c5cf08e72d17b3423a394490a7b070e76319daecc002103fe20accefde7ec4), uint256(0x1b7e726ee4d89e57d6de6bbaddd973232ee5924d5e20dee173b7ed83ed967c44)], [uint256(0x209f3a3c102bea46d010c20a5085f54db165f770405ea29c630c04dcf862bdf2), uint256(0x08251076b35acaef7d34c6ef729d07ee2feb81d14063a8ea570240da7c81d961)]);
         vk.gamma_abc = new Pairing.G1Point[](4);
-        vk.gamma_abc[0] = Pairing.G1Point(uint256(0x224eb5346983e655f8d0db0eb8ab9fbc657ce82cbdf1c9edb4f3772307dc7b8f), uint256(0x087ceccfbc996233deb60e9ea463f754cbf33db778aa8356e7afc82af7f06778));
-        vk.gamma_abc[1] = Pairing.G1Point(uint256(0x0a702b24a38da723ebb946e07669611a6fb8a8581dd970a16c42dcd6d27a5c7a), uint256(0x1bd0996800906895281b23cbab30cbf621ed2502a5b5e875e07c3d9dbed8ec70));
-        vk.gamma_abc[2] = Pairing.G1Point(uint256(0x10251043ae4c1bac4e8082560f562d9910e516ddfd6ae999ac6feef2b554c97e), uint256(0x2652135e624cd74c2673ffc8b67902bda496da99476dfa72bff04f21fe581e88));
-        vk.gamma_abc[3] = Pairing.G1Point(uint256(0x098c09f86cfa9457901b4ada33d6487da08fb6e208b3c61d4b94430a0bce942b), uint256(0x21ba13d96379a4cd568de22c8123d2e69df4aaf22900dfef762408df6db29f05));
+        vk.gamma_abc[0] = Pairing.G1Point(uint256(0x0ce0c8333b138190f96f174814617714e2322348a3b7c29ebd0466e4c2eeaf1d), uint256(0x2676218a7cf6b8058a6f244ee5f355aa836f58c2167dcd8276f0bbd82e9d4bdc));
+        vk.gamma_abc[1] = Pairing.G1Point(uint256(0x08964c28404a2b642776f7fc3338fd862b22bf2d52fe41f36edf7ead37a35931), uint256(0x1ae2e07f0a5574f8ea31f1d043c16a192900f3b60e496c4e2ba56707015a5998));
+        vk.gamma_abc[2] = Pairing.G1Point(uint256(0x0256b0936870d833fcd21032bef7305827727ce00148d22058efd66593bda133), uint256(0x0ed814c36c9cf82bbcacc5e06e2ce403241f0646a4b3504f3c2709cdd069db12));
+        vk.gamma_abc[3] = Pairing.G1Point(uint256(0x2a96a1a9f717e768d3272f4d0cf4b842bdb6f934df6cc66967cd96584eadc547), uint256(0x2ebd66fcf95b672b5f6f5cf10ec6e7a17909b50d88c2ed50f3aa905e83977438));
     }
     function verify(uint[] memory input, Proof memory proof) internal view returns (uint) {
         uint256 snark_scalar_field = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
@@ -382,4 +200,192 @@ contract Verifier {
             return false;
         }
     }
+}
+
+
+contract SoulBoundToken {
+    
+
+    uint256 private _tokenIdCounter;
+
+    struct IDInfo {
+        string name;
+        uint256 id;
+    }
+
+    uint256 private currentTokenId;
+    
+    mapping(uint256 tokenId => address) private _owners;
+    mapping(address owner => uint256) private _balances;
+    mapping(uint256 id => address) private _idOwners;
+    mapping(address => bool) public minters;
+
+    //modifier onlyAccessThroughSignature(bytes32 _sig) {
+    //    require(keccak256(abi.encodePacked(_sig)) == keccak256("Sign to get token info"), "Invalid signature");
+    //    _;
+    //}
+
+    modifier onlyMinter() {
+        require(minters[msg.sender], "Caller is not a minter");
+        _;
+    }
+
+    Verifier verifier;
+
+    constructor(address _verifierAddress) {
+        verifier = Verifier(_verifierAddress);
+    }
+
+        // Function to grant minting permission to an address
+    function grantMinter(address _minter) public  {
+        minters[_minter] = true;
+    }
+
+    // Function to revoke minting permission from an address
+    function revokeMinter(address _minter) public  {
+        minters[_minter] = false;
+    }
+
+    // Mint function callable only by addresses with minting permission
+    function mint(address _to, string memory _name, uint256 _id) public onlyMinter {
+
+        require(_idOwnerOf(_id) == address(0), "Token ID already exists");
+        
+        uint256 newTokenId = currentTokenId;
+        currentTokenId++;
+
+        if (_to == address(0)) {
+            revert("Wrong minter adress");
+        }
+        address previousOwner = _update(_to, newTokenId, _id);
+        if (previousOwner != address(0)) {
+            revert("Wrong previous owner");
+        }
+
+        _setIDInfo(newTokenId, _name, _id);
+    }
+
+    // Internal function to set token information
+    function _setIDInfo(uint256 _tokenId, string memory _name, uint256 _id) internal {
+        IDInfo memory info = IDInfo(_name, _id);
+        tokenInfo[_tokenId] = info;
+    }
+
+    // Mapping to store additional token information
+    mapping(uint256 => IDInfo) private tokenInfo;
+
+    //function getTokenInfo(address owner) public view onlyAccessThroughSignature("getTokenInfo") returns (IDInfo memory) {
+        
+    //    uint256 tokenId = getTokenIdFromAddress(owner);
+
+    //    return tokenInfo[tokenId];
+    //}
+
+    function getTokenInfo(address owner) public view returns (IDInfo memory) {
+        
+        uint256 tokenId = getTokenIdFromAddress(owner);    
+        //require(testProof(), "Token verification failed");
+
+        return tokenInfo[tokenId];
+    }
+
+    function getTokenIdFromAddress(address owner) public view returns (uint256) {
+        for (uint256 i = 0; i < currentTokenId; i++) {
+            if (_ownerOf(i) == owner) {
+                return i;
+            }
+        
+        }
+        return 0;
+    }
+
+    function transferFrom(address from, address to, uint256 tokenId) public { revert("Your ID cannot be transfered"); }
+
+
+    function burn(uint256 tokenId) external {
+        require(ownerOf(tokenId) == msg.sender, "Only the owner of the ID can burn it.");
+
+        address previousOwner = _update(address(0), tokenId, tokenInfo[tokenId].id);
+        if (previousOwner == address(0)) {
+            revert ("ERC721NonexistentToken");
+        }
+        delete tokenInfo[tokenId];
+
+    }
+
+    function _idOwnerOf(uint256 id) public view returns (address) {
+        return _idOwners[id];
+    }
+
+    function _ownerOf(uint256 tokenId) internal view virtual returns (address) {
+        return _owners[tokenId];
+    }
+
+    function ownerOf(uint256 tokenId) public view virtual returns (address) {
+        return _requireOwned(tokenId);
+    }
+
+    function _requireOwned(uint256 tokenId) internal view returns (address) {
+        address owner = _ownerOf(tokenId);
+        if (owner == address(0)) {
+            revert ("NonexistentToken");
+        }
+        return owner;
+    }
+
+    function _update(address to, uint256 tokenId, uint256 id/*, address auth*/) internal returns (address) {
+        address from = _ownerOf(tokenId);
+
+        // Execute the update
+        if (from != address(0)) {
+
+            unchecked {
+                _balances[from] -= 1;
+            }
+        }
+
+        if (to != address(0)) {
+            unchecked {
+                _balances[to] += 1;
+            }
+        }
+
+        _owners[tokenId] = to;
+        _idOwners[id]    = to;   
+
+        return from;
+    }
+
+    function testProof() public view returns (bool) {
+        uint256[2] memory a = [
+            0x2f1a76ed3dd6bcaf2584a5dc76a33e2d04e8ec45fa69ab83324255faf5773292,
+            0x29babe26ccd3206ba451972d995c70e7c0e37984e6bc25761cdcb53c9b8e3953
+        ];
+        uint256[2][2] memory b = [
+            [
+                0x020cecc344a6a08fbfa22af8495072a84eb3363db12260f5632246d8471f8e8e,
+                0x28af39cd4a5f9883dc2c52c27e777818bc2886472d929a8866306a8a1d848d16
+            ],
+            [
+                0x067e58fcc71b63e6250ec18dca01286ec87bc6306b7e16822ec35145611c9ef5,
+                0x2bb106854e200ea5efee102f969fbfb8c382350b9fa6e5840553118fa268d419
+            ]
+        ];
+        uint256[2] memory c = [
+            0x1f9d025be628fa40b8f03f03ed2f5c38043945a3ba63ccc282756dfeb346bf28,
+            0x2401a59f09e291b81f292090e54988a2f342950c0eafc2f37e0668ddf5a160b0
+        ];
+        uint256[3] memory input = [uint256(150), uint256(150), uint256(1)];
+
+        Verifier.Proof memory proof;
+        proof.a = Pairing.G1Point(a[0], a[1]);
+        proof.b = Pairing.G2Point([b[0][0], b[0][1]], [b[1][0], b[1][1]]);
+        proof.c = Pairing.G1Point(c[0], c[1]);
+
+        // Call the verifier contract
+        return verifier.verifyTx(proof, input);
+    }
+
+
+
 }

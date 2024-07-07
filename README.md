@@ -6,14 +6,14 @@ Digital identification system on Scroll testnet is built and methods for impleme
 
 •	In case of a death or ID change, an ID needs to be got rid of. A burn function is implemented for cases like these that sends the NFT to a burn address that no one has access to, practically burning it.
 
-•	Information that is stored in the NFT can be accessed through poking the smart contract with a read call. Security of the information is ensured by adding a requirement that checks whether the address trying to read the ID information in the NFT, actually has the NFT or not. It reverts the read call if an address tries to read someone else`s NFT information. Thus, only action that can be done with ID is burning it or reading ID information after minting. Also, added a zero-knowledge proof system that verifies owner and caller are the same. There is only one proof for this case but it is planned to implement proof generation for every call.
+•	Information that is stored in the NFT can be accessed through poking the smart contract with a read call. Security of the information is ensured by adding a requirement that checks whether the address trying to read the ID information in the NFT, actually has the NFT or not. It reverts the read call if an address tries to read someone else`s NFT information. Thus, only action that can be done with ID is burning it or reading ID information after minting. Also, added a zero-knowledge proof system that verifies owner and caller are the same. Dynamic proof generating on the frontend is tried to be implemented on the system but bugs couldnt be fixed in time so, there is only one proof for this case which is always true.
 
 •	A function is added to the smart contract that grants minting access to an address written inside the function. Only the deployer of the contract has the ability to grant minting access to prevent anyone having access to the digital identity system that might result in people which are not meant to have an ID end up having one by getting an illegal access. Also, a function that revokes access from an address that access is given before is also implemented to prevent abuse of access power by malicious users.
 
 Contract
 
-Published the contract on Scroll Sepolia, contract is: 0x0ea3e8ebcc4be5dac7600c9aa3764ad510a385aa
-Scanner website: https://sepolia.scrollscan.com/address/0x0ea3e8ebcc4be5dac7600c9aa3764ad510a385aa
+Published the contract on Scroll Sepolia, contract is: 0xb6508da8270BeF8245658abAad13f9de541c6dAe
+Scanner website: https://sepolia.scrollscan.com/address/0xb6508da8270BeF8245658abAad13f9de541c6dAe#code
 
 Website
 
